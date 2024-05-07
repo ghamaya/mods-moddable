@@ -67,5 +67,5 @@ void xs_irnectx_write(xsMachine *the)
 
     rmt_transmit(tx_channel, nec_encoder, &nec_code, sizeof(nec_code), &transmit_config);
 
-    rmt_tx_wait_all_done(tx_channel);   // add waiting
+    rmt_tx_wait_all_done(tx_channel, 500);   // add waiting
 }
