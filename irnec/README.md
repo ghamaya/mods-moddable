@@ -5,3 +5,4 @@ I am testing new modules using espressif/esp-idf/examples/peripherals/rmt/ir_nec
 - irnecrx:&nbsp; IR NEC code receiver
 - irnectx:&nbsp; IR NEC code transmitter
 - rcu_m5stickc_plus:&nbsp; Remote Controller sample
+- rcu_m5nanoc6:&nbsp; WebSocket RCU sample
