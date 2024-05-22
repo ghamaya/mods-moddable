@@ -27,7 +27,7 @@
 		document.getElementById("state").innerHTML = "close";
 	}
 
-	function wsSend(command, repeat) {
+	function wsSend(command) {
 		document.getElementById("msg").innerHTML = "---";
 		ws.send(command);
 		ws.addEventListener("message", (event) => {
