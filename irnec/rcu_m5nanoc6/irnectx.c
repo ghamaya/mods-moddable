@@ -10,23 +10,30 @@
 rmt_channel_handle_t tx_channel = NULL;
 rmt_encoder_handle_t nec_encoder = NULL;
 rmt_transmit_config_t transmit_config = {};
+int txdone_wait_timeout = 300;  // default:300ms   0: ignore wait function, -1: wait unlimited
 
 void xs_irnectx_destructor(void *data)
 {
 }
 
 void xs_irnectx(xsMachine *the)
-{   
+{
+    int pin = 0;     // TX IR gpio pin
+    if (xsmcArgc == 1) {
+        pin = xsmcToInteger(xsArg(0));
+    } else if (xsmcArgc == 2) {
+        pin = xsmcToInteger(xsArg(0));
+        txdone_wait_timeout = xsmcToInteger(xsArg(1));
+    }
+
     // create RMT TX channel
     rmt_tx_channel_config_t tx_channel_cfg = {
         .clk_src = RMT_CLK_SRC_DEFAULT,
         .resolution_hz = 1000000, // 1MHz resolution, 1 tick = 1us
         .mem_block_symbols = 64, // amount of RMT symbols that the channel can store at a time
         .trans_queue_depth = 4, // number of transactions that allowed to pending in the background, this example won't queue multiple transactions, so queue depth > 1 is sufficient
-        .gpio_num = 0, // TX GPIO pin
+        .gpio_num = pin, // TX GPIO pin
     };
-    
-    if (xsmcArgc) tx_channel_cfg.gpio_num = xsmcToInteger(xsArg(0));
       
     // rmt_channel_handle_t tx_channel = NULL;
     rmt_new_tx_channel(&tx_channel_cfg, &tx_channel);
@@ -66,6 +73,7 @@ void xs_irnectx_write(xsMachine *the)
     }
 
     rmt_transmit(tx_channel, nec_encoder, &nec_code, sizeof(nec_code), &transmit_config);
-
-    rmt_tx_wait_all_done(tx_channel, 500);  // add waiting
+    if(txdone_wait_timeout != 0) {
+        rmt_tx_wait_all_done(tx_channel, txdone_wait_timeout);
+    }
 }

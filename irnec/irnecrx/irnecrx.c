@@ -6,6 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "xsmc.h"
+//#include "mc.xs.h"
 #include "driver/rmt_rx.h"
 
 // NEC timing spec
@@ -21,6 +22,7 @@
 // Saving NEC decode results
 static uint16_t s_nec_code_address;
 static uint16_t s_nec_code_command;
+int read_timeout = 1000;    // ms
 
 // Check whether a duration is within expected range
 #define IR_NEC_DECODE_MARGIN 200 
@@ -109,16 +111,26 @@ QueueHandle_t receive_queue = NULL;
 
 void xs_irnecrx(xsMachine *the)
 {
+    int pin = 0;     // RX IR gpio pin
+    if (xsmcArgc == 1) {
+        pin = xsmcToInteger(xsArg(0));
+    } else if (xsmcArgc == 2) {
+        pin = xsmcToInteger(xsArg(0));
+        read_timeout = xsmcToInteger(xsArg(1));
+    }
+
     // create RMT RX channel
     rmt_rx_channel_config_t rx_channel_cfg = {
         .clk_src = RMT_CLK_SRC_DEFAULT,
         .resolution_hz = 1000000, // 1MHz resolution, 1 tick = 1us
         .mem_block_symbols = 64, // amount of RMT symbols that the channel can store at a time
-        .gpio_num = 0,      // RX IR gpio pin number
+        .gpio_num = pin,      // RX IR gpio pin number
     };
 
     // set RX IR gpio pin
-    if (xsmcArgc) rx_channel_cfg.gpio_num = xsmcToInteger(xsArg(0));
+    if (xsmcArgc == 1) {
+        rx_channel_cfg.gpio_num = xsmcToInteger(xsArg(0));
+    }
 
     // set rmt_receive_config_t receive_config -the following timing requirement is based on NEC protocol
     receive_config.signal_range_min_ns = 1250;     // the shortest duration for NEC signal is 560us, 1250ns < 560us, valid signal won't be treated as noise
@@ -149,7 +161,7 @@ void xs_irnecrx_read(xsMachine *the)
     // ready to receive
     rmt_receive(rx_channel, raw_symbols, sizeof(raw_symbols), &receive_config);  
     // wait for RX done signal
-    if (xQueueReceive(receive_queue, &rx_data, pdMS_TO_TICKS(1000)) == pdPASS) {
+    if (xQueueReceive(receive_queue, &rx_data, pdMS_TO_TICKS(read_timeout)) == pdPASS) {
     // parse the receive symbols and print the result
     switch (rx_data.num_symbols) {
         case 34: // NEC normal frame
