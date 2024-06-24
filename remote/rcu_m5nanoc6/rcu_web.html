@@ -1,0 +1,38 @@
+<!-- WebSocket RCU sample for rcu_m5nanoc6 -->
+
+<html><body onload="wsOpen()">
+<div>
+	<button style="color:red" type="button" onclick="wsOpen()">Open</button>
+	<button style="color:blue" type="button" onclick="wsClose()">Close</button>
+	<small>
+		<span id="state">---</span>
+		<span id="msg">---</span>
+	</small>
+</div>
+<div>
+	<button type="button" onclick="wsSend('2222FE01')">Power</button>
+	<button type="button" onclick="wsSend('2222F30C')">Volume +</button>
+	<button type="button" onclick="wsSend('2222F20D')">Volume -</button>
+</div>
+<script>
+	var ws = null;
+
+	function wsOpen() {
+		ws = new WebSocket("ws://192.168.0.139:80");
+		document.getElementById("state").innerHTML = "open";
+	}
+
+	function wsClose() {
+		ws.close();
+		document.getElementById("state").innerHTML = "close";
+	}
+
+	function wsSend(command) {
+		document.getElementById("msg").innerHTML = "---";
+		ws.send(command);
+		ws.addEventListener("message", (event) => {
+			document.getElementById("msg").innerHTML = event.data;
+		})
+	}
+</script>
+</body></html>
